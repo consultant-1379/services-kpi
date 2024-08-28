@@ -1,0 +1,22 @@
+##The variables $selected_KPIS, $event_successes, $event_errors and $event_imsi are built using other templates.
+##The MSSQueryBuilder will decide which templates to use to generate the strings that should be substituted into this
+##template.
+
+begin
+##Define some constants that are used by the macros
+#DEFINE_CONSTANTS()
+
+select
+	TS,
+	$selected_KPIs
+from
+	$mssKpiTable
+group by
+    TS
+	#if($isMssVoiceReport)
+		,
+		NO_OF_TOTAL_SUBSCRIBERS
+	#end
+order by
+    TS
+end

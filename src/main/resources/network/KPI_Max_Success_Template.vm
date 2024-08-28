@@ -1,0 +1,1 @@
+max(isnull((case when isnull(${success_table_alias}.EVENT_ID, ${error_table_alias}.EVENT_ID)=$event_id_value then isnull($max_duration, 0) end), 0)) as '$kpi_name'

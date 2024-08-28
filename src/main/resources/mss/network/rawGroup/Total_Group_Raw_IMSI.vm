@@ -1,0 +1,45 @@
+#DEFINE_CONSTANTS()
+
+#set($groupDef = $groupDefinitions.get($type))
+#set($groupTable = $groupDef.getTableName())
+#set($groupnameColumn = $groupDef.getGroupNameColumn())
+#set($joinKeys = $groupDef.getGroupKeys())
+
+full outer join
+(select
+        chart_times.tmp_st,
+		$groupnameColumn,
+        count(distinct(IMSI))
+ from
+	(
+		#if($toCalcTotalSubscribers)
+			$imsiSuccessTable
+			union all
+		#end
+		#if($isMssVoiceReport)
+			$imsiBlockedTable
+			union all
+			$imsiDroppedTable
+		#else
+			$imsi_table_alias
+		#end
+		) as tmp(
+            DATETIME_ID,
+            $groupnameColumn,			
+            IMSI
+        ),
+       #GET_CHART_TIMES($starttime $endtime $interval)
+ where
+ DATETIME_ID = tmp_st
+ group by
+	tmp_st,
+	$groupnameColumn
+) as total_sub (
+	DATETIME_ID,
+    $groupnameColumn,
+    NO_OF_TOTAL_SUBSCRIBERS
+)
+on(
+	#GET_MULTI_JOIN(["$errView","$success_table_alias"] "$event_source_table_alias" ["DATETIME_ID"])
+	and #GET_MULTI_JOIN(["$errView","$success_table_alias"] "$event_source_table_alias" [$groupnameColumn])
+	)

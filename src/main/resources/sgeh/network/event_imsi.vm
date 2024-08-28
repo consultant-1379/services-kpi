@@ -1,0 +1,39 @@
+#DEFINE_CONSTANTS()
+
+full outer join
+(select
+	chart_times.tmp_st,
+	#GET_TAC_MANUFACTURER_OR_PLAIN_GET_COLUMNS_AS( $type ),
+    IMSI_COUNT from(
+    select
+        DATETIME_ID,
+        count(distinct(IMSI))
+    from (
+        #GET_ALL_IMSIS_FOR_PERIOD($TECH_PACK_LIST.getAllRawErrTables() "err_raw" $interval)
+    ) as RAW_DATA(
+        DATETIME_ID,
+        IMSI
+    )
+    GROUP BY DATETIME_ID
+) as tmp(
+    DATETIME_ID,
+    IMSI_COUNT
+),#GET_CHART_TIMES($starttime $endtime $interval)
+where
+    DATETIME_ID = tmp_st
+) as $event_source_table_alias 
+(
+DATETIME_ID,
+
+#if($type==$ApplicationConstants.TYPE_MAN)
+    MANUFACTURER,
+#else
+    #GET_COLUMNS($columns)
+#end
+NO_OF_TOTAL_ERR_SUBSCRIBERS
+)
+on
+(
+#GET_MULTI_JOIN(["$error_table_alias","$success_table_alias"] "$event_source_table_alias" ["DATETIME_ID"])
+#GET_IMSI_JOIN_CONIDITION($error_table_alias $success_table_alias $event_source_table_alias $columns)
+)

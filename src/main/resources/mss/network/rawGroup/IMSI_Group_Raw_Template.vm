@@ -1,0 +1,45 @@
+#DEFINE_CONSTANTS()
+
+#set($groupDef = $groupDefinitions.get($type))
+#set($groupTable = $groupDef.getTableName())
+#set($groupnameColumn = $groupDef.getGroupNameColumn())
+#set($joinKeys = $groupDef.getGroupKeys())
+#if($isTypeMSC)
+    #if($isMssVoiceReport)
+    	#set($filterColumns = ["IMSI","TELE_SERVICE_CODE","TAC","EVNTSRC_ID"])
+    #else
+    	#set($filterColumns = ["IMSI","TAC","EVNTSRC_ID"])
+    #end
+#else
+	#if($isMssVoiceReport)
+		#set($filterColumns = ["IMSI","TELE_SERVICE_CODE","TAC","HIER3_ID","HIER321_ID","EVNTSRC_ID"])
+	#else
+		#set($filterColumns = ["IMSI","TAC","HIER3_ID","HIER321_ID","EVNTSRC_ID"])
+	#end
+#end
+#if($isMssVoiceReport)
+	select
+    	#REPLACE_TABLE_NAME_IN_COLUMN($rawTableAlias "DATETIME_ID"),
+        #REPLACE_TABLE_NAME_IN_COLUMN("temp_group" $groupnameColumn),
+        #REPLACE_TABLE_NAME_IN_COLUMN($rawTableAlias "IMSI")
+    from
+    	#GET_ALL_COLUMNS_FOR_PERIOD_WITH_OPTIONAL_TAC_EXCLUSION_SPECIFY_COLUMNS($rawTables $rawTableAlias $filterColumns $useTACExclusion $interval),
+        $groupTable temp_group
+    where
+        temp_group.$groupnameColumn = :$ApplicationConstants.GROUP_NAME_KEY
+    	and #GET_JOIN($rawTableAlias "temp_group" $joinKeys)
+    	$extraWhereClause
+#else
+	select
+    	#REPLACE_TABLE_NAME_IN_COLUMN($rawTableAlias "DATETIME_ID"),
+        #REPLACE_TABLE_NAME_IN_COLUMN("temp_group" $groupnameColumn),
+    	count(distinct(#REPLACE_TABLE_NAME_IN_COLUMN($rawTableAlias "IMSI"))) as NO_OF_ERR_SUBSCRIBERS
+    from
+    	#GET_ALL_COLUMNS_FOR_PERIOD_WITH_OPTIONAL_TAC_EXCLUSION_SPECIFY_COLUMNS($rawTables $rawTableAlias $filterColumns $useTACExclusion $interval),
+        $groupTable temp_group
+    where
+        temp_group.$groupnameColumn = :$ApplicationConstants.GROUP_NAME_KEY
+    	and #GET_JOIN($rawTableAlias "temp_group" $joinKeys)
+    	$extraWhereClause
+    	GROUP BY DATETIME_ID, GROUP_NAME
+#end

@@ -1,0 +1,56 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:jee="http://www.springframework.org/schema/jee"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans-2.5.xsd 
+						http://www.springframework.org/schema/context 
+						http://www.springframework.org/schema/context/spring-context-2.5.xsd 
+						http://www.springframework.org/schema/util 
+						http://www.springframework.org/schema/util/spring-util-2.5.xsd 
+						http://www.springframework.org/schema/jee 
+						http://www.springframework.org/schema/jee/spring-jee-2.5.xsd">
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="classpath:/com/ericsson/eniq/events/server/test/jdbc.properties"/>
+    </bean>
+    <bean id="kpiUtilities" class="com.ericsson.eniq.events.server.kpi.KpiUtilities"
+          init-method="applicationStartup" destroy-method="applicationShutdown"/>
+
+    <bean id="templateUtils" class="com.ericsson.eniq.events.server.templates.utils.TemplateUtils"
+          init-method="applicationStartup" destroy-method="applicationShutdown"/>
+
+    <bean id="kpiFactory" class="com.ericsson.eniq.events.server.kpi.KpiFactory">
+        <property name="kpiUtilities" ref="kpiUtilities"/>
+        <property name="sgehAttachSuccessRateKPI" ref="sgehAttachSuccessRateKPI"/>
+    </bean>
+
+
+    <bean id="sgehAttachSuccessRateKPI" name="SGEHAttachSuccessRateKPI"
+          class="com.ericsson.eniq.events.server.kpi.sgeh.impl.SGEHAttachSuccessRateKPI"
+          init-method="init">
+        <property name="kpiUtilities" ref="kpiUtilities"/>
+    </bean>
+
+    <bean id="pdpContextCutoffRatioKPI" name="PDPContextCutoffRatioKPI"
+          class="com.ericsson.eniq.events.server.kpi.sgeh.impl.SGEHAttachSuccessRateKPI"
+          init-method="init">
+        <property name="kpiUtilities" ref="kpiUtilities"/>
+    </bean>
+
+    <bean id="pdpContextActivationSuccessRateKPI" name="PDPContextActivationSuccessRateKPI"
+          class="com.ericsson.eniq.events.server.kpi.sgeh.impl.SGEHAttachSuccessRateKPI"
+          init-method="init">
+        <property name="kpiUtilities" ref="kpiUtilities"/>
+    </bean>
+
+    <bean id="sgehPagingFailureRatioKPI" name="SGEHPagingFailureRatioKPI"
+          class="com.ericsson.eniq.events.server.kpi.sgeh.impl.SGEHAttachSuccessRateKPI"
+          init-method="init">
+        <property name="kpiUtilities" ref="kpiUtilities"/>
+    </bean>
+
+
+</beans>

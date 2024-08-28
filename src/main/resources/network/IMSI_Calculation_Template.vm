@@ -1,0 +1,1 @@
+max(isnull(${no_error_subscribers},0)) as 'Impacted Subscribers (LTE)'

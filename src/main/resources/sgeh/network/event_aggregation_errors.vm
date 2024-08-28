@@ -1,0 +1,33 @@
+	full outer join
+	
+	(select
+        #GET_AGG_COLUMNS($error_aggregation_columns)
+#GET_COLUMNS($columns)
+		EVENT_ID,
+		chart_times.tmp_st
+	from
+		#REPLACE_RAW_VIEW_WITH_RAW_TABLES($TECH_PACK_LIST.getAllErrAggregationViews() "temp_err"),
+		#GET_CHART_TIMES($starttime $endtime $interval)
+	where
+		#GET_COLUMNS_WHERE($columns) 
+		and #GET_DATETIME_RANGE()
+		and DATETIME_ID >= chart_times.tmp_st
+        and DATETIME_ID < chart_times.tmp_et
+			
+	group by
+		#GET_COLUMNS($columns)
+		case NO_OF_PAGING_ATTEMPTS when 0 then 0 else 1 end,
+		EVENT_ID,
+		chart_times.tmp_st
+
+	)as $error_table_alias 
+	(
+        $error_aggregation_columns_alias,
+		#GET_COLUMNS($columns)
+		EVENT_ID,
+		DATETIME_ID
+    )on
+	(
+	#GET_JOIN("$error_table_alias" "$success_table_alias" ["DATETIME_ID","EVENT_ID"])
+		and #GET_JOIN("$error_table_alias" "$success_table_alias" $columns)
+	)

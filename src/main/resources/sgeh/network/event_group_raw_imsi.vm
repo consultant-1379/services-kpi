@@ -1,0 +1,36 @@
+#DEFINE_CONSTANTS()
+
+#SET_GROUP_TYPE($type)
+
+#set($groupDef = $groupDefinitions.get($groupType))
+#set($groupTable = $groupDef.getTableName())
+#set($groupnameColumn = $groupDef.getGroupNameColumn())
+#set($joinKeys = $groupDef.getGroupKeys())
+
+full outer join 
+    (select
+        chart_times.tmp_st,
+        $groupnameColumn,
+        count(distinct(IMSI))
+    from
+		#REPLACE_RAW_VIEW_WITH_RAW_TABLES_WITH_OPTIONAL_TAC_EXCLUSION($TECH_PACK_LIST.getAllRawErrTables() "temp_sub"),
+        #GET_CHART_TIMES($starttime $endtime $interval),
+        dc.$groupTable temp_group
+    where
+        temp_group.$groupnameColumn = :$ApplicationConstants.GROUP_NAME_PARAM
+        and #GET_JOIN("temp_sub" "temp_group" $joinKeys)
+        and DATETIME_ID >= tmp_st
+        and DATETIME_ID < tmp_et
+    group by
+        tmp_st,
+        $groupnameColumn
+    )as sub(
+        DATETIME_ID,
+        $groupnameColumn,
+        NO_OF_TOTAL_ERR_SUBSCRIBERS
+    )
+    on(
+        #GET_MULTI_JOIN(["err","suc"] "sub" ["DATETIME_ID"])
+        and #GET_MULTI_JOIN(["err","suc"] "sub" [$groupnameColumn])
+    )
+	

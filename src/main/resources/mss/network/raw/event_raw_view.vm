@@ -1,0 +1,28 @@
+full outer join
+	
+	(select
+		#CONVERT_TO_IS_NULL_FUNC_STRING(["$dropped_table_alias","$blocked_table_alias"] $columns)
+		#CONVERT_TO_IS_NULL_FUNC_STRING(["$dropped_table_alias","$blocked_table_alias"] ["EVENT_ID"])
+		#CONVERT_TO_IS_NULL_FUNC_STRING(["$dropped_table_alias","$blocked_table_alias"] ["DATETIME_ID"])
+		$blocked_columns_alias,
+		$dropped_columns_alias
+	from
+		$blockedTable
+		full outer join
+		$droppedTable
+		on(
+			#GET_MULTI_JOIN_EMPTY_CHECK(["$blocked_table_alias"] "$dropped_table_alias" ["DATETIME_ID","EVENT_ID"])
+			and #GET_MULTI_JOIN_EMPTY_CHECK(["$blocked_table_alias"] "$dropped_table_alias" $columns)
+		)
+	)as $errView 
+	(
+		#GET_COLUMNS($columns)
+		EVENT_ID,
+		DATETIME_ID,
+		$blocked_columns_alias,
+		$dropped_columns_alias
+    )on
+	(
+	#GET_MULTI_JOIN_EMPTY_CHECK(["$errView"] "$success_table_alias" ["DATETIME_ID","EVENT_ID"])
+		and #GET_MULTI_JOIN_EMPTY_CHECK(["$errView"] "$success_table_alias" $columns)
+	)

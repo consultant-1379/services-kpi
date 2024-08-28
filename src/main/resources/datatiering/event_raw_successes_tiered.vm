@@ -1,0 +1,30 @@
+
+	(select          
+        #GET_AGG_COLUMNS($success_aggregation_columns)
+		#GET_COLUMNS($columns)
+		EVENT_ID,
+		isnull(EVENT_SUBTYPE_ID, -1),
+		chart_times.tmp_st
+	from
+		$sucview temp_suc,
+		#GET_CHART_TIMES($starttime $endtime $interval)
+	where
+        #GET_COLUMNS_WHERE($columns) 
+		and #GET_DATETIME_RANGE()
+		and DATETIME_ID >= chart_times.tmp_st
+        and DATETIME_ID < chart_times.tmp_et
+			
+	group by
+		#GET_COLUMNS($columns)
+		case NO_OF_PAGING_ATTEMPTS when 0 then 0 else 1 end,
+		EVENT_ID,
+		EVENT_SUBTYPE_ID,
+		chart_times.tmp_st
+	) as $success_table_alias
+	(
+        $success_aggregation_columns_alias,
+        #GET_COLUMNS($columns)
+		EVENT_ID,
+		EVENT_SUBTYPE_ID,
+		DATETIME_ID
+    )

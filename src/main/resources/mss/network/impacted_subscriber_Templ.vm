@@ -1,0 +1,31 @@
+begin
+##Define some constants that are used by the macros
+#DEFINE_CONSTANTS()
+##Get the date ranges based on the start time, end time and interval
+
+select
+	dateformat(tmp_st, 'yyyy-mm-dd hh:mm:ss.S') as TS,
+	NO_OF_ERR_SUBSCRIBERS
+from
+	(select
+		DATETIME_ID,
+        count(distinct(IMSI))
+	from
+		(
+			$imsi_table_alias
+		) as tmp
+	group by
+        DATETIME_ID
+		) as total_sub (
+			DATETIME_ID,
+			NO_OF_ERR_SUBSCRIBERS
+)
+right outer join
+#GET_CHART_TIMES($starttime $endtime $interval)
+    on(chart_times.tmp_st = total_sub.DATETIME_ID)
+group by
+TS,
+NO_OF_ERR_SUBSCRIBERS
+order by
+    TS
+end

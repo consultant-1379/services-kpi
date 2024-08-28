@@ -1,0 +1,24 @@
+	(select
+        sum($error_aggregation_columns),
+		#GET_COLUMNS($columns)
+		EVENT_ID,
+		chart_times.tmp_st
+	from
+		#REPLACE_AGGREGATION_TABLES_WITH_VIEW($errAggTables "temp_err"),
+		#GET_CHART_TIMES($starttime $endtime $interval)
+	where
+		#GET_COLUMNS_WHERE($columns) 
+		and DATETIME_ID >= chart_times.tmp_st
+        and DATETIME_ID < chart_times.tmp_et
+		$extraWhereClause
+	group by
+		#GET_COLUMNS($columns)
+		EVENT_ID,
+		chart_times.tmp_st
+	)as $error_table_alias 
+	(
+        $error_aggregation_columns_alias,
+		#GET_COLUMNS($columns)
+		EVENT_ID,
+		DATETIME_ID
+    )

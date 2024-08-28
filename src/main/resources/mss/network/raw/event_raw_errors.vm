@@ -1,0 +1,37 @@
+#if($isMssVoiceReport)
+	#set($filterColumns = ["DATETIME_ID","TELE_SERVICE_CODE","TAC","HIER3_ID","HIER321_ID","EVNTSRC_ID","EVENT_ID"])
+#else
+	#set($filterColumns = ["DATETIME_ID","TAC","HIER3_ID","HIER321_ID","EVNTSRC_ID","EVENT_ID"])
+#end
+	
+	(select
+        $error_raw_columns,
+		#GET_TAC_MANUFACTURER_OR_PLAIN_GET_COLUMNS($type)
+		EVENT_ID,
+		chart_times.tmp_st
+	from
+		##REPLACE_RAW_VIEW_WITH_RAW_TABLES($rawErrTables "temp_err"),
+		#REPLACE_RAW_VIEW_WITH_RAW_TABLES_WITH_OPTIONAL_TAC_EXCLUSION_SPECIFY_COLUMNS($rawErrTables "temp_err" $filterColumns $useTACExclusion),
+		#GET_CHART_TIMES($starttime $endtime $interval)
+		#if($type==$ApplicationConstants.TYPE_MAN)
+		,dc.DIM_E_SGEH_TAC tac
+		#end
+	where
+		#GET_TAC_MANUFACTURER_OR_PLAIN_GET_COLUMNS_WHERE($type "temp_err")
+		and DATETIME_ID >= chart_times.tmp_st
+        and DATETIME_ID < chart_times.tmp_et
+		$extraWhereClause
+	group by
+		##$error_raw_columns_alias,
+        #GET_COLUMNS($columns)
+        EVENT_ID,
+		chart_times.tmp_st
+	having
+		EVENT_ID is not null  
+	)as $error_table_alias 
+	(
+        $error_raw_columns_alias,
+		#GET_COLUMNS($columns)
+		EVENT_ID,
+		DATETIME_ID
+    )

@@ -1,0 +1,1 @@
+max(isnull((case when EVENT_ID = $event_id_value and ${condition_column} ${condition} then (cast (round((isnull((isnull($no_of_dropped_calls,0) )/cast(isnull($no_of_blocked_calls,0) + isnull($no_of_dropped_calls,0) + isnull($no_of_successes,0) as float),0))*100, 2) as numeric(5,2))) end),0)) as '$kpi_name'

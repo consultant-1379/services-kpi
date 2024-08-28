@@ -1,0 +1,34 @@
+#DEFINE_CONSTANTS()
+
+#set($groupDef = $groupDefinitions.get($type))
+#set($groupTable = $groupDef.getTableName())
+#set($groupnameColumn = $groupDef.getGroupNameColumn())
+#set($joinKeys = $groupDef.getGroupKeys())
+	
+	
+(
+	select
+        $groupnameColumn,
+		sum($success_aggregation_columns),		
+        EVENT_ID,
+		chart_times.tmp_st
+    from
+		#REPLACE_AGGREGATION_TABLES_WITH_VIEW($sucview "temp_suc"),
+        #GET_CHART_TIMES($starttime $endtime $interval),
+        $groupTable temp_group
+    where
+        temp_group.$groupnameColumn = :$ApplicationConstants.GROUP_NAME_KEY
+		and #GET_JOIN("temp_suc" "temp_group" $joinKeys)
+        and DATETIME_ID >= tmp_st
+        and DATETIME_ID < tmp_et
+		$extraWhereClause
+    group by
+        $groupnameColumn,
+        EVENT_ID,
+		chart_times.tmp_st
+    ) as $success_table_alias(
+        $groupnameColumn,
+		$success_column_alias,
+        EVENT_ID,
+		DATETIME_ID
+    )

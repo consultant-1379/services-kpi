@@ -1,0 +1,42 @@
+#DEFINE_CONSTANTS()
+
+#SET_GROUP_TYPE($type)
+
+#set($groupDef = $groupDefinitions.get($groupType))
+#set($groupTable = $groupDef.getTableName())
+#set($groupnameColumn = $groupDef.getGroupNameColumn())
+#set($joinKeys = $groupDef.getGroupKeys())
+	
+	full outer join
+	
+	(select
+        chart_times.tmp_st,
+        $groupnameColumn,
+        #GET_GROUP_COLUMNS($error_aggregation_columns)
+        EVENT_ID
+	from
+        #REPLACE_RAW_VIEW_WITH_RAW_TABLES($TECH_PACK_LIST.getAllErrAggregationViews() "temp_err"),
+        #GET_CHART_TIMES($starttime $endtime $interval),
+        $groupTable temp_group 
+	where
+        temp_group.$groupnameColumn = :$ApplicationConstants.GROUP_NAME_PARAM
+        and #GET_DATETIME_RANGE()
+        and #GET_JOIN("temp_err" "temp_group" $joinKeys)
+        and DATETIME_ID >= tmp_st
+        and DATETIME_ID < tmp_et
+	group by
+        chart_times.tmp_st,
+        $groupnameColumn,
+		case NO_OF_PAGING_ATTEMPTS when 0 then 0 else 1 end,
+        EVENT_ID
+	)as $error_table_alias 
+	(
+        DATETIME_ID,
+        $groupnameColumn,
+        $error_aggregation_columns_alias,
+        EVENT_ID
+    )on
+	(
+	#GET_JOIN("$error_table_alias" "$success_table_alias" ["DATETIME_ID","EVENT_ID"])
+        and #GET_JOIN("$error_table_alias" "$success_table_alias" [$groupnameColumn])
+	)

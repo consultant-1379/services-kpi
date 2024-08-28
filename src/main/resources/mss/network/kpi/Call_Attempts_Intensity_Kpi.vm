@@ -1,0 +1,10 @@
+case
+when (NO_OF_TOTAL_SUBSCRIBERS is null) then
+## Since there is no information about impacted subscribers returning zero will give a wrong
+## information. Hence return NULL, in UI the column should display blank indicating no
+## information
+null
+else
+max(isnull((case when EVENT_ID = $event_id_value then (cast (round(isnull((isnull($no_of_successes,0) + isnull($no_of_blocked_calls,0) + isnull($no_of_dropped_calls,0))/cast( NO_OF_TOTAL_SUBSCRIBERS as float),0), 2) as numeric(5,2))) end),0))
+end
+as '$kpi_name'

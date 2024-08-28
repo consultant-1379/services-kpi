@@ -1,0 +1,3 @@
+## Numerator = (ERROR + SUCCESS) - (error_table_alias.suc_err_sum_variable + success_table_alias.suc_err_sum_variable)
+## Denominator = (ERROR + SUCCESS)
+max(isnull((case when isnull(${error_table_alias}.EVENT_ID, ${success_table_alias}.EVENT_ID)=$event_id_value then (cast (round((isnull((isnull($no_of_errors,0) + isnull($no_of_successes,0) - isnull(${error_table_alias}.${suc_err_sum_variable},0) - isnull(${success_table_alias}.${suc_err_sum_variable},0) )/cast(isnull($no_of_errors,0) + isnull($no_of_successes,0) as DECIMAL(16)),0))*100, 2) as numeric(5,2))) end),0)) as '$kpi_name'

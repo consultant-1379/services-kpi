@@ -1,0 +1,29 @@
+##The variables $selected_KPIS, $event_successes, $event_errors and $event_imsi are built using other templates.
+##The LTEQueryBuilder will decide which templates to use to generate the strings that should be substituted into this
+##template.
+
+begin
+##Define some constants that are used by the macros
+#DEFINE_CONSTANTS()
+
+
+##Get the date ranges based on the start time, end time and interval
+
+select
+	dateformat(tmp_st, 'yyyy-mm-dd hh:mm:ss.S') as TS,
+	$selected_KPIs
+from
+	##This is a select statement that gets the data from the succcess tables. See event_*_successes.vm 
+	$event_successes
+	##This is a select statement that gets the data from the error tables. See event_*_errors.vm 
+	$event_errors	
+	##This is a select statement that gets the number of impacted subscribers 
+	$event_imsi
+	right outer join
+    #GET_CHART_TIMES($starttime $endtime $interval)
+    on(chart_times.tmp_st = isnull(${success_table_alias}.DATETIME_ID, ${error_table_alias}.DATETIME_ID))
+group by
+    TS
+order by
+    TS
+end

@@ -1,0 +1,39 @@
+#DEFINE_CONSTANTS()
+
+#set($groupDef = $groupDefinitions.get($type))
+#set($groupTable = $groupDef.getTableName())
+#set($groupnameColumn = $groupDef.getGroupNameColumn())
+#set($joinKeys = $groupDef.getGroupKeys())
+#if($isMssVoiceReport)
+	#set($filterColumns = ["DATETIME_ID","TELE_SERVICE_CODE","TAC","HIER3_ID","HIER321_ID","EVNTSRC_ID","EVENT_ID"])
+#else
+	#set($filterColumns = ["DATETIME_ID","TAC","HIER3_ID","HIER321_ID","EVNTSRC_ID","EVENT_ID"])
+#end
+
+(select
+	    $groupnameColumn,
+		EVENT_ID,
+        chart_times.tmp_st,
+		$error_raw_columns
+    from
+		##REPLACE_RAW_VIEW_WITH_RAW_TABLES($rawErrTables "temp_err"),
+		#REPLACE_RAW_VIEW_WITH_RAW_TABLES_WITH_OPTIONAL_TAC_EXCLUSION_SPECIFY_COLUMNS($rawErrTables "temp_err" $filterColumns $useTACExclusion),
+        #GET_CHART_TIMES($starttime $endtime $interval),
+        $groupTable temp_group        
+    where
+        temp_group.$groupnameColumn = :$ApplicationConstants.GROUP_NAME_KEY
+        and #GET_JOIN("temp_err" "temp_group" $joinKeys)
+        and DATETIME_ID >= tmp_st
+        and DATETIME_ID < tmp_et
+		$extraWhereClause
+    group by
+		$groupnameColumn,
+		EVENT_ID,
+        chart_times.tmp_st
+    )as $error_table_alias (
+	    $groupnameColumn,
+		EVENT_ID,
+        DATETIME_ID,
+        $error_raw_columns_alias
+    )
+	

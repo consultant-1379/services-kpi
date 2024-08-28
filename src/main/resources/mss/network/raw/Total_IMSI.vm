@@ -1,0 +1,47 @@
+#DEFINE_CONSTANTS()
+
+full outer join
+(select
+	chart_times.tmp_st,
+	#GET_COLUMNS($columns)
+    count(distinct(IMSI))
+from
+	(
+		#if($isMssVoiceReport)
+			#if($toCalcTotalSubscribers)
+				$imsiSuccessTable
+				union all
+			#end
+			$imsiBlockedTable
+			union all
+			$imsiDroppedTable
+		#else
+			#if($toCalcTotalSubscribers)
+				$imsiSuccessTable
+				union all
+			#end
+			$imsi_table_alias
+		#end
+		 ) as tmp(
+            DATETIME_ID,
+            #GET_COLUMNS($columns)	
+            IMSI
+        ),
+       #GET_CHART_TIMES($starttime $endtime $interval)
+where
+	DATETIME_ID >= tmp_st
+	and DATETIME_ID < tmp_et
+group by
+	#GET_COLUMNS($columns)
+	tmp_st
+
+) as $event_source_table_alias 
+(
+	DATETIME_ID,
+	#GET_COLUMNS($columns)
+	NO_OF_TOTAL_SUBSCRIBERS
+)
+on(
+	#GET_MULTI_JOIN_EMPTY_CHECK(["$errView","$success_table_alias"] "$event_source_table_alias" ["DATETIME_ID"])
+	and #GET_MULTI_JOIN_EMPTY_CHECK(["$errView","$success_table_alias"] "$event_source_table_alias" $columns)
+	)

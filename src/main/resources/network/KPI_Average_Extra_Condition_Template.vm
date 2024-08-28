@@ -1,0 +1,5 @@
+#if($isAgg)
+max(isnull((case when isnull(${success_table_alias}.EVENT_ID, ${error_table_alias}.EVENT_ID)=$event_id_value and (isnull(${success_table_alias}.${condition_column}, ${error_table_alias}.${condition_column}) ${condition}) then (cast (round((isnull(${success_table_alias}.AVG_DURATION,0)), 2) as numeric(5,2))) end),0)) as '$kpi_name'
+#else
+max(isnull((case when isnull(${success_table_alias}.EVENT_ID, ${error_table_alias}.EVENT_ID)=$event_id_value and (isnull(${success_table_alias}.${condition_column}, ${error_table_alias}.${condition_column}) ${condition}) then (cast (round((isnull((isnull($total_duration,0) )/cast(isnull($no_of_successes,0) as DECIMAL(16)),0)), 2) as numeric(5,2))) end),0)) as '$kpi_name'
+#end

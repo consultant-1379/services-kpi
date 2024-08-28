@@ -1,0 +1,31 @@
+	full outer join
+	
+	(select
+        $error_raw_columns,
+		EVENT_ID,
+		isnull(EVENT_SUBTYPE_ID, -1),
+		chart_times.tmp_st
+	from
+    	#REPLACE_RAW_VIEW_WITH_RAW_TABLES_MANUFACTURER_WITH_OPTIONAL_TAC_EXCLUSION($rawLteErrTables "temp_err"),
+    	#GET_CHART_TIMES($starttime $endtime $interval)
+	where	
+		DATETIME_ID >= :dateFrom and DATETIME_ID < :dateTo 
+		and DATETIME_ID >= chart_times.tmp_st
+        and DATETIME_ID < chart_times.tmp_et
+	group by
+        case PAGING_ATTEMPTS when 0 then 0 else 1 end,
+		EVENT_ID,
+		EVENT_SUBTYPE_ID,
+		chart_times.tmp_st
+	having
+		EVENT_ID is not null  
+	)as $error_table_alias 
+	(
+        $error_raw_columns_alias,
+		EVENT_ID,
+		EVENT_SUBTYPE_ID,
+		DATETIME_ID
+    )on
+	(
+		#GET_JOIN("$error_table_alias" "$success_table_alias" ["DATETIME_ID","EVENT_ID","EVENT_SUBTYPE_ID"])
+	)

@@ -1,0 +1,42 @@
+#DEFINE_CONSTANTS()
+
+full outer join
+(select
+	DATEADD(mi,-DATEPART(MINUTE,DATETIME_ID)%$interval,DATETIME_ID) AS DATETIME_ID,
+	#GET_COLUMNS($columns)
+    count(distinct(IMSI))
+from
+	(
+		#if($isMssVoiceReport)
+			#if($toCalcTotalSubscribers)
+				$imsiSuccessTable
+				union all
+			#end
+			$imsiBlockedTable
+			union all
+			$imsiDroppedTable
+		#else
+			#if($toCalcTotalSubscribers)
+				$imsiSuccessTable
+				union all
+			#end
+			$imsi_table_alias
+		#end
+		 ) as tmp(
+            DATETIME_ID,
+            #GET_COLUMNS($columns)	
+            IMSI
+        )
+group by
+	#GET_COLUMNS($columns)
+	DATETIME_ID
+) as $event_source_table_alias 
+(
+	DATETIME_ID,
+	#GET_COLUMNS($columns)
+	NO_OF_TOTAL_SUBSCRIBERS
+)
+on(
+	#GET_MULTI_JOIN_EMPTY_CHECK(["$errView","$success_table_alias"] "$event_source_table_alias" ["DATETIME_ID"])
+	and #GET_MULTI_JOIN_EMPTY_CHECK(["$errView","$success_table_alias"] "$event_source_table_alias" $columns)
+	)

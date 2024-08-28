@@ -1,0 +1,5 @@
+on
+	(
+	#GET_MULTI_JOIN_EMPTY_CHECK(["$errView"] "$success_table_alias" ["DATETIME_ID","EVENT_ID"])
+		and #GET_MULTI_JOIN_EMPTY_CHECK(["$errView"] "$success_table_alias" $columns)
+	)

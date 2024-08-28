@@ -1,0 +1,40 @@
+
+##Define some constants that are used by the macros
+#DEFINE_CONSTANTS()
+
+
+(select
+	dateformat(tmp_st, 'yyyy-mm-dd hh:mm:ss.S') as TS,
+	#CONVERT_TO_IS_NULL_FUNC_STRING(["$errView","$success_table_alias"] ["EVENT_ID"] )
+    #CONVERT_TO_IS_NULL_FUNC_STRING(["$errView","$success_table_alias"] $columns )
+    $success_column_alias,
+    #if($isMssVoiceReport)
+		$blocked_columns_alias,
+		$dropped_columns_alias,
+		NO_OF_TOTAL_SUBSCRIBERS
+	#else
+		$error_columns_alias
+	#end
+from
+	##This is a select statement that gets the data from the succcess tables. See event_*_successes.vm 
+	$event_successes
+	##This is a select statement that gets the data from the error tables. See event_*_errors.vm 
+	$event_errors	
+	##This is a select statement that gets the number of impacted subscribers 
+	$event_imsi
+	right outer join
+	#GET_CHART_TIMES($starttime $endtime $interval)
+    on(chart_times.tmp_st = isnull(${success_table_alias}.DATETIME_ID, ${errView}.DATETIME_ID))
+group by
+    TS,
+	EVENT_ID,
+	#GET_COLUMNS($columns)
+	$success_column_alias,
+    #if($isMssVoiceReport)
+		$blocked_columns_alias,
+		$dropped_columns_alias,
+		NO_OF_TOTAL_SUBSCRIBERS
+	#else
+		$error_columns_alias
+	#end
+) as Total

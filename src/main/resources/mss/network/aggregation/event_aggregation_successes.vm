@@ -1,0 +1,26 @@
+(
+	select          
+        sum($success_aggregation_columns),
+		#GET_COLUMNS($columns)
+		EVENT_ID,
+		chart_times.tmp_st
+	from
+		#REPLACE_AGGREGATION_TABLES_WITH_VIEW($sucview "temp_suc"),
+		#GET_CHART_TIMES($starttime $endtime $interval)
+	where
+        #GET_COLUMNS_WHERE($columns) 
+		and DATETIME_ID >= chart_times.tmp_st
+        and DATETIME_ID < chart_times.tmp_et
+		$extraWhereClause
+	group by
+		#GET_COLUMNS($columns)
+		EVENT_ID,
+		chart_times.tmp_st
+	) as $success_table_alias
+	(
+        $success_column_alias,
+        #GET_COLUMNS($columns)
+		EVENT_ID,
+		DATETIME_ID
+    )
+    

@@ -1,0 +1,31 @@
+(select          
+        $success_raw_columns,
+		#GET_COLUMNS($columns)
+		EVENT_ID,
+		isnull(EVENT_SUBTYPE_ID, -1),
+		chart_times.tmp_st
+from
+		#REPLACE_RAW_VIEW_WITH_RAW_TABLES_WITH_OPTIONAL_TAC_EXCLUSION($rawLteSucTables "temp_suc"),		
+		#GET_CHART_TIMES($starttime $endtime $interval)
+where		
+		DATETIME_ID >= chart_times.tmp_st
+        and DATETIME_ID < chart_times.tmp_et
+		#GET_COLUMNS_WHERE_AND($columns)
+group by
+	    ##$success_raw_columns_alias,
+        #GET_COLUMNS($columns)	
+        case PAGING_ATTEMPTS when 0 then 0 else 1 end,
+		EVENT_ID,
+		EVENT_SUBTYPE_ID,
+		chart_times.tmp_st
+having
+		EVENT_ID is not null   	
+) as $success_table_alias
+(
+        $success_raw_columns_alias,
+        #GET_COLUMNS($columns)
+		EVENT_ID,
+		EVENT_SUBTYPE_ID,
+		DATETIME_ID
+)
+    

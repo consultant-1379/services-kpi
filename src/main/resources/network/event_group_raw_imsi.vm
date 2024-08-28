@@ -1,0 +1,125 @@
+#DEFINE_CONSTANTS()
+
+#SET_GROUP_TYPE($type)
+
+#set($groupDef = $groupDefinitions.get($groupType))
+#set($groupTable = $groupDef.getTableName())
+#set($groupnameColumn = $groupDef.getGroupNameColumn())
+#set($joinKeys = $groupDef.getGroupKeys())
+
+#macro (REPLACE_RAW_VIEW_WITH_RAW_TABLES_WITH_OPTIONAL_TAC_EXCLUSION $rawtables $rawview)
+(
+    #foreach ($rawtable in $rawtables)
+    select
+    IMSI,
+    #if ($timerange == "TR_4")
+            local_date_id,
+        #else
+            DATETIME_ID,
+        #end
+    #GET_COLUMNS_NO_COMMA_TRAILING($joinKeys)
+    from dc.$rawtable
+    where
+    #if ($timerange == "TR_4")
+            #GET_DATE_RANGE_LOCAL()
+        #else
+            #GET_DATETIME_RANGE()
+        #end
+
+    #if ($useTACExclusion)
+        and #GET_TAC_EXCLUSION()
+        #end
+        #if($velocityCount < $rawtables.size())
+        union all
+        #end
+    #end
+) as $rawview
+#end
+
+#macro (REPLACE_RAW_VIEW_WITH_RAW_TABLES_WITH_OPTIONAL_TAC_EXCLUSION_FOR_APN $rawtables $rawview)
+(
+    #foreach ($rawtable in $rawtables)
+    select
+    IMSI, 
+    #if ($timerange == "TR_4")
+            local_date_id
+        #else
+            DATETIME_ID
+        #end
+    from dc.$rawtable
+    where
+     #if ($timerange == "TR_4")
+            #GET_DATE_RANGE_LOCAL()
+        #else
+            #GET_DATETIME_RANGE()
+        #end
+        #if ($useTACExclusion)
+        and #GET_TAC_EXCLUSION()
+        #end
+        and APN IN (SELECT APN FROM dc.GROUP_TYPE_E_APN temp_group WHERE temp_group.GROUP_NAME = :$ApplicationConstants.GROUP_NAME_PARAM)
+        group by IMSI, 
+        #if ($timerange == "TR_4")
+            local_date_id
+        #else
+            DATETIME_ID
+        #end
+        #if($velocityCount < $rawtables.size())
+        union all
+        #end
+    #end
+) as $rawview
+#end
+
+#if (($groupTable.toString().indexOf("GROUP_TYPE_E_APN") > -1))
+    full outer join 
+        (select
+            chart_times.tmp_st,
+            :$ApplicationConstants.GROUP_NAME_PARAM AS GROUP_NAME,
+            count(distinct(IMSI))
+        from
+        #REPLACE_RAW_VIEW_WITH_RAW_TABLES_WITH_OPTIONAL_TAC_EXCLUSION_FOR_APN($rawLteErrTables "temp_sub")
+        (IMSI,DATETIME_ID),
+            #GET_CHART_TIMES($starttime $endtime $interval)
+        where
+            DATETIME_ID >= tmp_st
+            and DATETIME_ID < tmp_et
+        group by
+            tmp_st
+        )as sub(
+            DATETIME_ID,
+            $groupnameColumn,
+            NO_OF_TOTAL_ERR_SUBSCRIBERS
+        )
+        on(
+            #GET_MULTI_JOIN(["$error_table_alias","$success_table_alias"] "sub" ["DATETIME_ID"])
+            and #GET_MULTI_JOIN(["$error_table_alias","$success_table_alias"] "sub" [$groupnameColumn])
+        )
+#else
+    full outer join 
+        (select
+            chart_times.tmp_st,
+            $groupnameColumn,
+            count(distinct(IMSI))
+        from
+        #REPLACE_RAW_VIEW_WITH_RAW_TABLES_WITH_OPTIONAL_TAC_EXCLUSION($rawLteErrTables "temp_sub")
+        	(IMSI,DATETIME_ID,#GET_COLUMNS_NO_COMMA_TRAILING($joinKeys)),
+            #GET_CHART_TIMES($starttime $endtime $interval),
+            dc.$groupTable temp_group
+        where
+            temp_group.$groupnameColumn = :$ApplicationConstants.GROUP_NAME_PARAM
+            and #GET_JOIN("temp_sub" "temp_group" $joinKeys)
+            and DATETIME_ID >= tmp_st
+            and DATETIME_ID < tmp_et
+        group by
+            tmp_st,
+            $groupnameColumn
+        )as sub(
+            DATETIME_ID,
+            $groupnameColumn,
+            NO_OF_TOTAL_ERR_SUBSCRIBERS
+        )
+        on(
+            #GET_MULTI_JOIN(["err","suc"] "sub" ["DATETIME_ID"])
+            and #GET_MULTI_JOIN(["err","suc"] "sub" [$groupnameColumn])
+        )
+#end

@@ -1,0 +1,19 @@
+#DEFINE_CONSTANTS()
+#if($isMssVoiceReport)
+	#set($filterColumns = ["IMSI","TELE_SERVICE_CODE","TAC","EVNTSRC_ID"])
+#else
+	#set($filterColumns = ["IMSI","TAC","EVNTSRC_ID"])
+#end
+
+select
+    #REPLACE_TABLE_NAME_IN_COLUMN($rawTableAlias "DATETIME_ID"),
+	#GET_TAC_MANUFACTURER_OR_PLAIN_GET_COLUMNS($type)
+	#REPLACE_TABLE_NAME_IN_COLUMN($rawTableAlias "IMSI")
+from
+	#GET_ALL_COLUMNS_FOR_PERIOD_WITH_OPTIONAL_TAC_EXCLUSION_SPECIFY_COLUMNS($rawTables $rawTableAlias $filterColumns $useTACExclusion $interval)
+	#if($type==$ApplicationConstants.TYPE_MAN)
+		,dc.DIM_E_SGEH_TAC tac
+	#end
+where
+	#GET_TAC_MANUFACTURER_OR_PLAIN_GET_COLUMNS_WHERE($type $rawTableAlias)
+	$extraWhereClause
